@@ -45,6 +45,10 @@ HTTP_ROOT = None
 HTTP_LOOK = None
 LAUNCH_BROWSER = False
 
+GIT_PATH = None
+GIT_USER = None
+GIT_BRANCH = None
+
 SAB_HOST = None
 SAB_PORT = None
 SAB_USER = None
@@ -171,7 +175,7 @@ def initialize():
     with INIT_LOCK:
 
         global __INITIALIZED__, FULL_PATH, PROG_DIR, LOGLEVEL, DAEMON, DATADIR, CONFIGFILE, CFG, LOGDIR, HTTP_HOST, HTTP_PORT, HTTP_USER, HTTP_PASS, HTTP_ROOT, HTTP_LOOK, LAUNCH_BROWSER, LOGDIR, CACHEDIR, \
-            IMP_ONLYISBN, IMP_PREFLANG, SAB_HOST, SAB_PORT, SAB_API, SAB_USER, SAB_PASS, DESTINATION_DIR, DESTINATION_COPY, DOWNLOAD_DIR, SAB_CAT, USENET_RETENTION, BLACKHOLE, BLACKHOLEDIR, GR_API, \
+            IMP_ONLYISBN, IMP_PREFLANG, SAB_HOST, SAB_PORT, SAB_API, SAB_USER, SAB_PASS, DESTINATION_DIR, DESTINATION_COPY, DOWNLOAD_DIR, SAB_CAT, USENET_RETENTION, BLACKHOLE, BLACKHOLEDIR, GR_API, GIT_PATH, GIT_USER, GIT_BRANCH,\
             NZBMATRIX, NZBMATRIX_USER, NZBMATRIX_API, NEWZNAB, NEWZNAB_HOST, NEWZNAB_API, NEWZBIN, NEWZBIN_UID, NEWZBIN_PASS, NEWZNAB2, NEWZNAB_HOST2, NEWZNAB_API2, EBOOK_TYPE
 
         if __INITIALIZED__:
@@ -193,6 +197,9 @@ def initialize():
         HTTP_PASS = check_setting_str(CFG, 'General', 'http_pass', '')
         HTTP_ROOT = check_setting_str(CFG, 'General', 'http_root', '')
         HTTP_LOOK = check_setting_str(CFG, 'General', 'http_look', 'default')
+        GIT_PATH = check_setting_str(CFG, 'General', 'git_path', '')
+        GIT_USER = check_setting_str(CFG, 'General', 'git_user', 'nutski')
+        GIT_BRANCH = check_setting_str(CFG, 'General', 'git_branch', 'dev')
 
         LAUNCH_BROWSER = bool(check_setting_int(CFG, 'General', 'launch_browser', 1))
         LOGDIR = check_setting_str(CFG, 'General', 'logdir', '')
@@ -333,7 +340,10 @@ def config_write():
     new_config['General']['http_look'] = HTTP_LOOK
     new_config['General']['launch_browser'] = int(LAUNCH_BROWSER)
     new_config['General']['logdir'] = LOGDIR
-
+    new_config['General']['git_path'] = GIT_PATH
+    new_config['General']['git_user'] = GIT_USER
+    new_config['General']['git_branch'] = GIT_BRANCH
+    
     new_config['General']['imp_onlyisbn'] = int(IMP_ONLYISBN)
     new_config['General']['imp_preflang'] = IMP_PREFLANG
     new_config['General']['ebook_type'] = EBOOK_TYPE
