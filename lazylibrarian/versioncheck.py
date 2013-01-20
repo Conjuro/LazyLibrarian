@@ -97,12 +97,24 @@ def checkGithub():
         lazylibrarian.LATEST_VERSION = git['sha']
     except:
         logger.warn('Could not get the latest commit from github')
+        logger.info('Git  User')
+        logger.info(str(lazylibrarian.GIT_USER))
+        logger.info('Current Version')
+        logger.info(str(lazylibrarian.CURRENT_VERSION))
+        logger.info('Latest Version')
+        logger.info(str(lazylibrarian.LATEST_VERSION))
         lazylibrarian.COMMITS_BEHIND = 0
         return lazylibrarian.CURRENT_VERSION
 
     # See how many commits behind we are
     if lazylibrarian.CURRENT_VERSION:
         logger.info('Comparing currently installed version with latest github version')
+        logger.info('Git  User')
+        logger.info(str(lazylibrarian.GIT_USER))
+        logger.info('Current Version')
+        logger.info(str(lazylibrarian.CURRENT_VERSION))
+        logger.info('Latest Version')
+        logger.info(str(lazylibrarian.LATEST_VERSION))
         url = 'https://api.github.com/repos/%s/lazylibrarian-1/compare/%s...%s' % (lazylibrarian.GIT_USER, lazylibrarian.CURRENT_VERSION, lazylibrarian.LATEST_VERSION)
 
         try:
