@@ -436,7 +436,7 @@ def start():
         starttime = datetime.datetime.now()
         SCHED.add_interval_job(postprocess.processDir, minutes=SCAN_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
         SCHED.add_interval_job(searchnzb.searchbook, minutes=SEARCH_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
-        SCHED.add_interval_job(versioncheck.checkForUpdates, minutes=VERSIONCHECK_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
+        SCHED.add_interval_job(versioncheck.checkGithub, minutes=1)
 
         SCHED.start()
 #        for job in SCHED.get_jobs():
