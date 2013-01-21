@@ -473,6 +473,9 @@ def start():
         SCHED.add_interval_job(searchnzb.searchbook, minutes=SEARCH_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
 #        SCHED.add_interval_job(versioncheck.checkGithub, minutes=360)
 
+        if CHECK_GITHUB_ON_STARTUP:
+            versioncheck.checkGithub
+        
         if CHECK_GITHUB:
             SCHED.add_interval_job(versioncheck.checkGithub, minutes=CHECK_GITHUB_INTERVAL)
             
