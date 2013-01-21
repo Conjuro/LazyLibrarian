@@ -475,56 +475,6 @@ def start():
         SCHED.add_interval_job(postprocess.processDir, minutes=SCAN_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
         SCHED.add_interval_job(searchnzb.searchbook, minutes=SEARCH_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
 #        SCHED.add_interval_job(versioncheck.checkGithub, minutes=360)
-# Get the latest commit available from github
-        url = 'https://api.github.com/repos/nutski/lazylibrarian-1/commits/dev' #% (lazylibrarian.GIT_USER, lazylibrarian.GIT_BRANCH)
-        logger.info('Retrieving latest version information from github')
-        try:
-            result = urllib2.urlopen(url, timeout=20).read()
-            git = simplejson.JSONDecoder().decode(result)
-            lazylibrarian.LATEST_VERSION = git['sha']
-        except:
-            logger.warn('Could not get the latest commit from github')
-            logger.info('Git  User')
-            logger.info(str(lazylibrarian.GIT_USER))
-            logger.info('Current Version')
-            logger.info(str(lazylibrarian.CURRENT_VERSION))
-            logger.info('Latest Version')
-            logger.info(str(lazylibrarian.LATEST_VERSION))
-            lazylibrarian.COMMITS_BEHIND = 0
-            return lazylibrarian.CURRENT_VERSION
-
-    # See how many commits behind we are
-        if lazylibrarian.CURRENT_VERSION:
-            logger.info('Comparing currently installed version with latest github version')
-            logger.info('Git  User')
-            logger.info(str(lazylibrarian.GIT_USER))
-            logger.info('Current Version')
-            logger.info(str(lazylibrarian.CURRENT_VERSION))
-            logger.info('Latest Version')
-            logger.info(str(lazylibrarian.LATEST_VERSION))
-            url = 'https://api.github.com/repos/%s/lazylibrarian-1/compare/%s...%s' % (lazylibrarian.GIT_USER, lazylibrarian.CURRENT_VERSION, lazylibrarian.LATEST_VERSION)
-
-            try:
-                result = urllib2.urlopen(url, timeout=20).read()
-                git = simplejson.JSONDecoder().decode(result)
-                lazylibrarian.COMMITS_BEHIND = git['total_commits']
-            except:
-                logger.warn('Could not get commits behind from github')
-                lazylibrarian.COMMITS_BEHIND = 0
-                return lazylibrarian.CURRENT_VERSION
-
-            if lazylibrarian.COMMITS_BEHIND >= 1:
-                logger.info('New version is available. You are %s commits behind' % lazylibrarian.COMMITS_BEHIND)
-            elif lazylibrarian.COMMITS_BEHIND == 0:
-                logger.info('LazyLibrarian is up to date')
-            elif lazylibrarian.COMMITS_BEHIND == -1:
-                logger.info('You are running an unknown version of LazyLibrarian. Run the updater to identify your version')
-
-        else:
-            logger.info('You are running an unknown version of LazyLibrarian. Run the updater to identify your version')
-
-        return lazylibrarian.LATEST_VERSION
-            
         if CHECK_GITHUB_ON_STARTUP:
             versioncheck.checkGithub
         
