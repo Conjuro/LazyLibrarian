@@ -475,7 +475,14 @@ def start():
         SCHED.add_interval_job(postprocess.processDir, minutes=SCAN_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
         SCHED.add_interval_job(searchnzb.searchbook, minutes=SEARCH_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
 #        SCHED.add_interval_job(versioncheck.checkGithub, minutes=360)
-
+# Get the latest commit available from github
+        url = 'https://api.github.com/repos/%s/lazylibrarian-1/commits/%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_BRANCH)
+        logger.info('Retrieving latest version information from github')
+        try:
+            result = urllib2.urlopen(url, timeout=20).read()
+            git = simplejson.JSONDecoder().decode(result)
+            lazylibrarian.LATEST_VERSION = git['sha']
+            
         if CHECK_GITHUB_ON_STARTUP:
             versioncheck.checkGithub
         
