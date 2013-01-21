@@ -466,6 +466,9 @@ def start():
     global __INITIALIZED__, started
 
     if __INITIALIZED__:
+        
+        # Start our scheduled background tasks
+        from lazylibrarian import searchnzb, versioncheck, postprocess
 
         # Crons and scheduled jobs go here
         starttime = datetime.datetime.now()
