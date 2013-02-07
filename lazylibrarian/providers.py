@@ -39,6 +39,8 @@ def NewzNab(book=None, newznabNumber=None):
 
     URL = HOST + '/api?' + urllib.urlencode(params)
 
+    logger.debug('Executing index search using url: ' + URL)
+
     try :
         request = urllib2.Request(URL)
         request.add_header('User-Agent', 'lazylibrary/0.0 +https://github.com/herman-rogers/LazyLibrarian-1')
@@ -52,8 +54,10 @@ def NewzNab(book=None, newznabNumber=None):
             data = None
 
     except Exception, e:
-        logger.error("Error 403 openning url")
+        logger.error("Error 403 opening url")
         data = None
+
+    logger.info('Completed search.')
 
     if data:
         # to debug because of api
