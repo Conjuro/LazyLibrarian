@@ -116,7 +116,7 @@ def checkGithub():
         logger.info(str(lazylibrarian.CURRENT_VERSION))
         logger.info('Latest Version')
         logger.info(str(lazylibrarian.LATEST_VERSION))
-        url = 'https://api.github.com/repos/%s/%s/compare/%s...%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_PROJECT, lazylibrarian.CURRENT_VERSION, lazylibrarian.LATEST_VERSION)
+        url = 'https://api.github.com/repos/%s/%s/compare/%s...%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_PROJECT, lazylibrarian.LATEST_VERSION, lazylibrarian.CURRENT_VERSION)
         logger.debug('Using url: ' + url)
 
         try:
