@@ -91,6 +91,7 @@ def checkGithub():
     # Get the latest commit available from github
     url = 'https://api.github.com/repos/%s/%s/commits/%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_PROJECT, lazylibrarian.GIT_BRANCH)
     logger.info('Retrieving latest version information from github')
+    logger.debug('Using url: ' + url)
     try:
         result = urllib2.urlopen(url, timeout=20).read()
         git = simplejson.JSONDecoder().decode(result)
@@ -116,6 +117,7 @@ def checkGithub():
         logger.info('Latest Version')
         logger.info(str(lazylibrarian.LATEST_VERSION))
         url = 'https://api.github.com/repos/%s/%s/compare/%s...%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_PROJECT, lazylibrarian.CURRENT_VERSION, lazylibrarian.LATEST_VERSION)
+        logger.debug('Using url: ' + url)
 
         try:
             result = urllib2.urlopen(url, timeout=20).read()
