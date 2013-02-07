@@ -90,34 +90,28 @@ def checkGithub():
 
     # Get the latest commit available from github
     url = 'https://api.github.com/repos/%s/%s/commits/%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_PROJECT, lazylibrarian.GIT_BRANCH)
-    logger.info('Retrieving latest version information from github')
-    logger.debug('Using url: ' + url)
+    logger.info(u'Retrieving latest version information from github')
+    logger.debug(u'Using url: %s' % url)
     try:
         result = urllib2.urlopen(url, timeout=20).read()
         git = simplejson.JSONDecoder().decode(result)
         lazylibrarian.LATEST_VERSION = git['sha']
     except:
-        logger.warn('Could not get the latest commit from github')
-        logger.info('Git  User')
-        logger.info(str(lazylibrarian.GIT_USER))
-        logger.info('Current Version')
-        logger.info(str(lazylibrarian.CURRENT_VERSION))
-        logger.info('Latest Version')
-        logger.info(str(lazylibrarian.LATEST_VERSION))
+        logger.warn(u'Could not get the latest commit from github')
+        logger.debug(u'Git  User: %s' % str(lazylibrarian.GIT_USER))
+        logger.debug(u'Current Version: %s' % str(lazylibrarian.CURRENT_VERSION))
+        logger.debug(u'Latest Version: %s' % str(lazylibrarian.LATEST_VERSION))
         lazylibrarian.COMMITS_BEHIND = 0
         return lazylibrarian.CURRENT_VERSION
 
     # See how many commits behind we are
     if lazylibrarian.CURRENT_VERSION:
-        logger.info('Comparing currently installed version with latest github version')
-        logger.info('Git  User')
-        logger.info(str(lazylibrarian.GIT_USER))
-        logger.info('Current Version')
-        logger.info(str(lazylibrarian.CURRENT_VERSION))
-        logger.info('Latest Version')
-        logger.info(str(lazylibrarian.LATEST_VERSION))
+        logger.info(u'Comparing currently installed version with latest github version')
+        logger.debug(u'Git  User: %s' % str(lazylibrarian.GIT_USER))
+        logger.debug(u'Current Version: %s' % str(lazylibrarian.CURRENT_VERSION))
+        logger.debug(u'Latest Version: %s' % str(lazylibrarian.LATEST_VERSION))
         url = 'https://api.github.com/repos/%s/%s/compare/%s...%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_PROJECT, lazylibrarian.LATEST_VERSION, lazylibrarian.CURRENT_VERSION)
-        logger.debug('Using url: ' + url)
+        logger.debug(u'Using url: %s' % url)
 
         try:
             result = urllib2.urlopen(url, timeout=20).read()
@@ -129,19 +123,19 @@ def checkGithub():
             elif git['status'] == 'ahead':
               lazylibrarian.COMMITS_BEHIND = -1
         except:
-            logger.warn('Could not get version information github')
+            logger.warn(u'Could not get version information github')
             lazylibrarian.COMMITS_BEHIND = 0
             return lazylibrarian.CURRENT_VERSION
 
         if lazylibrarian.COMMITS_BEHIND >= 1:
-            logger.info('New version is available. You are %s commits behind' % lazylibrarian.COMMITS_BEHIND)
+            logger.warn(u'New version is available. You are %s commits behind' % lazylibrarian.COMMITS_BEHIND)
         elif lazylibrarian.COMMITS_BEHIND == 0:
-            logger.info('LazyLibrarian is up to date')
+            logger.info(u'LazyLibrarian is up to date')
         elif lazylibrarian.COMMITS_BEHIND == -1:
-            logger.info('You are running a newer version than the official LazyLibrarian branch.')
+            logger.info(u'You are running a newer version than the official LazyLibrarian branch.')
 
     else:
-        logger.info('You are running an unknown version of LazyLibrarian. Run the updater to identify your version')
+        logger.warn(u'You are running an unknown version of LazyLibrarian. Run the updater to identify your version')
 
     return lazylibrarian.LATEST_VERSION
 
@@ -150,7 +144,7 @@ def update():
 
     if lazylibrarian.INSTALL_TYPE == 'win':
 
-        logger.info('Windows .exe updating not supported yet.')
+        logger.warn(u'Windows .exe updating not supported yet.')
         pass
 
 
@@ -159,7 +153,7 @@ def update():
         output, err = runGit('pull origin ' + version.LAZYLIBRARIAN_VERSION)
 
         if not output:
-            logger.error('Couldn\'t download latest version')
+            logger.error(u'Couldn\'t download latest version.')
 
         for line in output.split('\n'):
 

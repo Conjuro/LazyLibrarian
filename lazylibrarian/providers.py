@@ -39,7 +39,7 @@ def NewzNab(book=None, newznabNumber=None):
 
     URL = HOST + '/api?' + urllib.urlencode(params)
 
-    logger.debug('Executing index search using url: ' + URL)
+    logger.debug(u'Executing index search using url: ' + URL)
 
     try :
         request = urllib2.Request(URL)
@@ -57,11 +57,9 @@ def NewzNab(book=None, newznabNumber=None):
         logger.error("Error 403 opening url")
         data = None
 
-    logger.info('Completed search.')
-
     if data:
         # to debug because of api
-        logger.debug(u'Parsing results from <a href="%s">%s</a>' % (URL, lazylibrarian.NEWZNAB_HOST))
+        logger.info(u'Parsing results from <a href="%s">%s</a>' % (URL, lazylibrarian.NEWZNAB_HOST))
         rootxml = data.getroot()
         resultxml = rootxml.getiterator('item')
         nzbcount = 0
@@ -79,7 +77,9 @@ def NewzNab(book=None, newznabNumber=None):
             except IndexError:
                 logger.debug('No results')
         if nzbcount:
-            logger.debug('Found %s nzb for: %s' % (nzbcount, book['searchterm']))
+            logger.info(u'Found %s nzb for: %s' % (nzbcount, book['searchterm']))
         else:
-            logger.debug(u'Newznab returned 0 results for: ' + book['searchterm'] + '. Adding book to queue.')
+            logger.info(u'Newznab returned 0 results for: ' + book['searchterm'] + '. Adding book to queue.')
+    else:
+      logger.info(u'Newznab returned 0 results for: ' + book['searchterm'] + '. Adding book to queue.')
     return results
