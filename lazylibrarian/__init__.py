@@ -47,6 +47,7 @@ LAUNCH_BROWSER = False
 
 GIT_PATH = None
 GIT_USER = None
+GIT_PROJECT = None
 GIT_BRANCH = None
 INSTALL_TYPE = None
 CURRENT_VERSION = None
@@ -184,7 +185,7 @@ def initialize():
 
         global __INITIALIZED__, FULL_PATH, PROG_DIR, LOGLEVEL, DAEMON, DATADIR, CONFIGFILE, CFG, LOGDIR, HTTP_HOST, HTTP_PORT, HTTP_USER, HTTP_PASS, HTTP_ROOT, HTTP_LOOK, LAUNCH_BROWSER, LOGDIR, CACHEDIR, \
             IMP_ONLYISBN, IMP_PREFLANG, SAB_HOST, SAB_PORT, SAB_API, SAB_USER, SAB_PASS, DESTINATION_DIR, DESTINATION_COPY, DOWNLOAD_DIR, SAB_CAT, USENET_RETENTION, BLACKHOLE, BLACKHOLEDIR, GR_API, \
-            GIT_PATH, GIT_USER, GIT_BRANCH, CURRENT_VERSION, LATEST_VERSION, CHECK_GITHUB, CHECK_GITHUB_ON_STARTUP, CHECK_GITHUB_INTERVAL, \
+            GIT_PATH, GIT_USER, GIT_PROJECT, GIT_BRANCH, CURRENT_VERSION, LATEST_VERSION, CHECK_GITHUB, CHECK_GITHUB_ON_STARTUP, CHECK_GITHUB_INTERVAL, \
             NZBMATRIX, NZBMATRIX_USER, NZBMATRIX_API, NEWZNAB, NEWZNAB_HOST, NEWZNAB_API, NEWZBIN, NEWZBIN_UID, NEWZBIN_PASS, NEWZNAB2, NEWZNAB_HOST2, NEWZNAB_API2, EBOOK_TYPE
 
         if __INITIALIZED__:
@@ -208,6 +209,7 @@ def initialize():
         HTTP_LOOK = check_setting_str(CFG, 'General', 'http_look', 'default')
         GIT_PATH = check_setting_str(CFG, 'General', 'git_path', '')
         GIT_USER = check_setting_str(CFG, 'General', 'git_user', 'nutski')
+        GIT_PROJECT = check_setting_str(CFG, 'General', 'git_project', 'LazyLibrarian-1')
         GIT_BRANCH = check_setting_str(CFG, 'General', 'git_branch', 'dev')
         
         CHECK_GITHUB = bool(check_setting_int(CFG, 'General', 'check_github', 1))
@@ -373,6 +375,7 @@ def config_write():
     new_config['General']['logdir'] = LOGDIR
     new_config['General']['git_path'] = GIT_PATH
     new_config['General']['git_user'] = GIT_USER
+    new_config['General']['git_project'] = GIT_PROJECT
     new_config['General']['git_branch'] = GIT_BRANCH
     
     new_config['General']['check_github'] = int(CHECK_GITHUB)

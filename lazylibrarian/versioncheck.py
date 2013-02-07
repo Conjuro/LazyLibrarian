@@ -89,7 +89,7 @@ def getVersion():
 def checkGithub():
 
     # Get the latest commit available from github
-    url = 'https://api.github.com/repos/%s/lazylibrarian-1/commits/%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_BRANCH)
+    url = 'https://api.github.com/repos/%s/%s/commits/%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_PROJECT, lazylibrarian.GIT_BRANCH)
     logger.info('Retrieving latest version information from github')
     try:
         result = urllib2.urlopen(url, timeout=20).read()
@@ -115,7 +115,7 @@ def checkGithub():
         logger.info(str(lazylibrarian.CURRENT_VERSION))
         logger.info('Latest Version')
         logger.info(str(lazylibrarian.LATEST_VERSION))
-        url = 'https://api.github.com/repos/%s/lazylibrarian-1/compare/%s...%s' % (lazylibrarian.GIT_USER, lazylibrarian.CURRENT_VERSION, lazylibrarian.LATEST_VERSION)
+        url = 'https://api.github.com/repos/%s/%s/compare/%s...%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_PROJECT, lazylibrarian.CURRENT_VERSION, lazylibrarian.LATEST_VERSION)
 
         try:
             result = urllib2.urlopen(url, timeout=20).read()
@@ -165,7 +165,7 @@ def update():
 
     else:
 
-        tar_download_url = 'https://github.com/%s/lazylibrarian-1/tarball/%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_BRANCH)
+        tar_download_url = 'https://github.com/%s/%s/tarball/%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_PROJECT, lazylibrarian.GIT_BRANCH)
         update_dir = os.path.join(lazylibrarian.PROG_DIR, 'update')
         version_path = os.path.join(lazylibrarian.PROG_DIR, 'version.txt')
 
