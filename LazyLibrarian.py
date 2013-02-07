@@ -128,7 +128,7 @@ def main():
             })
 
     if lazylibrarian.LAUNCH_BROWSER and not options.nolaunch:
-        lazylibrarian.launch_browser(lazylibrarian.HTTP_HOST, lazylibrarian.HTTP_PORT, lazylibrarian.HTTP_ROOT)
+        lazylibrarian.launch_browser(lazylibrarian.HTTP_HOST, HTTP_PORT, lazylibrarian.HTTP_ROOT)
 
     lazylibrarian.start()
 
