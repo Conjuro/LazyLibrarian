@@ -29,11 +29,6 @@ def main():
     if not lazylibrarian.SYS_ENCODING or lazylibrarian.SYS_ENCODING in ('ANSI_X3.4-1968', 'US-ASCII', 'ASCII'):
         lazylibrarian.SYS_ENCODING = 'UTF-8'
 
-	#check the version when the application starts
-    from lazylibrarian import versioncheck
-    lazylibrarian.CURRENT_VERSION = versioncheck.getVersion()
-    LATEST_VERSION = versioncheck.checkGithub()
-
     # Set arguments
     from optparse import OptionParser
 
@@ -107,6 +102,11 @@ def main():
     lazylibrarian.CFG = ConfigObj(lazylibrarian.CONFIGFILE, encoding='utf-8')
 
     lazylibrarian.initialize()
+
+    #check the version when the application starts
+    from lazylibrarian import versioncheck
+    lazylibrarian.CURRENT_VERSION = versioncheck.getVersion()
+    lazylibrarian.LATEST_VERSION = versioncheck.checkGithub()
 
     if options.port:
         HTTP_PORT = int(options.port)
