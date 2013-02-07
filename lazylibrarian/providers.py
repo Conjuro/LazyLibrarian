@@ -54,7 +54,7 @@ def NewzNab(book=None, newznabNumber=None):
             data = None
 
     except Exception, e:
-        logger.error("Error 403 openning url")
+        logger.error("Error 403 opening url")
         data = None
 
     logger.info('Completed search.')
