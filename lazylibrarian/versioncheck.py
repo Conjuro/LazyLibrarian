@@ -122,9 +122,14 @@ def checkGithub():
         try:
             result = urllib2.urlopen(url, timeout=20).read()
             git = simplejson.JSONDecoder().decode(result)
-            lazylibrarian.COMMITS_BEHIND = git['total_commits']
+            if git['status'] == 'behind':
+              lazylibrarian.COMMITS_BEHIND = git['behind_by']
+            elif git['status'] == 'identical':
+              lazylibrarian.COMMITS_BEHIND = 0
+            elif git['status'] == 'ahead':
+              lazylibrarian.COMMITS_BEHIND = -1
         except:
-            logger.warn('Could not get commits behind from github')
+            logger.warn('Could not get version information github')
             lazylibrarian.COMMITS_BEHIND = 0
             return lazylibrarian.CURRENT_VERSION
 
@@ -133,7 +138,7 @@ def checkGithub():
         elif lazylibrarian.COMMITS_BEHIND == 0:
             logger.info('LazyLibrarian is up to date')
         elif lazylibrarian.COMMITS_BEHIND == -1:
-            logger.info('You are running an unknown version of LazyLibrarian. Run the updater to identify your version')
+            logger.info('You are running a newer version than the official LazyLibrarian branch.')
 
     else:
         logger.info('You are running an unknown version of LazyLibrarian. Run the updater to identify your version')
