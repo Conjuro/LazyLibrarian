@@ -21,25 +21,33 @@ class RotatingLogger(object):
     def initLogger(self, loglevel=1):
 
         l = logging.getLogger('lazylibrarian')
+        # This setLevel() affects both console and file
+        # Leave as DEBUG (highest level) and alter filehandler or consolehandler instead.
         l.setLevel(logging.DEBUG)
 
         self.filename = os.path.join(lazylibrarian.LOGDIR, self.filename)
 
         filehandler = handlers.RotatingFileHandler(self.filename, maxBytes=self.max_size, backupCount=self.max_files)
-        filehandler.setLevel(logging.DEBUG)
+        # File logging: Obey --debug, but ignore --quiet
+        # (Todo: Let level be set in settings)
+        if loglevel == 2:
+            filehandler.setLevel(logging.DEBUG)
+        else:
+            filehandler.setLevel(logging.INFO)
 
-        fileformatter = logging.Formatter('%(asctime)s - %(levelname)-7s :: %(message)s', '%d-%b-%Y %H:%M:%S')
+        fileformatter = logging.Formatter('%(asctime)s - %(levelname)-7s :: %(message)s ', '%Y-%m-%d %H:%M:%S')
 
         filehandler.setFormatter(fileformatter)
         l.addHandler(filehandler)
 
+        # Console logging: Obey --debug and --quiet
         if loglevel:
             consolehandler = logging.StreamHandler()
             if loglevel == 1:
                 consolehandler.setLevel(logging.INFO)
             if loglevel == 2:
                 consolehandler.setLevel(logging.DEBUG)
-            consoleformatter = logging.Formatter('%(asctime)s - %(levelname)s :: %(message)s', '%d-%b-%Y %H:%M:%S')
+            consoleformatter = logging.Formatter('%(asctime)s - %(levelname)-7s :: %(message)s', '%Y-%m-%d %H:%M:%S')
             consolehandler.setFormatter(consoleformatter)
             l.addHandler(consolehandler)
 
@@ -49,7 +57,12 @@ class RotatingLogger(object):
 
         threadname = threading.currentThread().getName()
 
-        if level != 'DEBUG':
+        # Weblog: Same behaviour as the file log
+        # Todo: Seperate option in settings/log page
+        if lazylibrarian.LOGLEVEL <= 1:
+            if level != 'DEBUG':
+                lazylibrarian.LOGLIST.insert(0, (formatter.now(), message, level, threadname))
+        else:
             lazylibrarian.LOGLIST.insert(0, (formatter.now(), message, level, threadname))
 
         message = threadname + ' : ' + message
