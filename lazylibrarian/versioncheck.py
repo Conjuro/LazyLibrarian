@@ -139,6 +139,14 @@ def checkGithub():
 
     return lazylibrarian.LATEST_VERSION
 
+def checkUpdate():
+
+    logger.info(u'Checking for updates.')
+    # Set/get version of local and remote branch
+    lazylibrarian.CURRENT_VERSION = getVersion()
+    lazylibrarian.LATEST_VERSION = checkGithub()
+    return
+
 def update():
 
 

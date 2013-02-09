@@ -85,16 +85,12 @@ def main():
     if not os.access(lazylibrarian.DATADIR, os.W_OK):
         raise SystemExit('Cannot write to the data directory: ' + lazylibrarian.DATADIR + '. Exit ...')
 
-    # create database and config
+    # Set database and config location variables
     lazylibrarian.DBFILE = os.path.join(lazylibrarian.DATADIR, 'lazylibrarian.db')
     lazylibrarian.CFG = ConfigObj(lazylibrarian.CONFIGFILE, encoding='utf-8')
 
+    # Load settings and database
     lazylibrarian.initialize()
-
-    #check the version when the application starts
-    from lazylibrarian import versioncheck
-    lazylibrarian.CURRENT_VERSION = versioncheck.getVersion()
-    lazylibrarian.LATEST_VERSION = versioncheck.checkGithub()
 
     if options.port:
         HTTP_PORT = int(options.port)
@@ -115,10 +111,13 @@ def main():
         'http_pass': lazylibrarian.HTTP_PASS,
         })
 
+    lazylibrarian.start()
+
     if lazylibrarian.LAUNCH_BROWSER and not options.nolaunch:
+        logger.info(u'Launching browser: %s:%s%s)' % (lazylibrarian.HTTP_HOST, HTTP_PORT, lazylibrarian.HTTP_ROOT))
         lazylibrarian.launch_browser(lazylibrarian.HTTP_HOST, HTTP_PORT, lazylibrarian.HTTP_ROOT)
 
-    lazylibrarian.start()
+    logger.info(u'Startup process completed.')
 
     while True:
         if not lazylibrarian.SIGNAL:
