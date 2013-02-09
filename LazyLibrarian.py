@@ -5,18 +5,18 @@ import lazylibrarian
 from lazylibrarian import webStart, logger
 
 def main():
-	#DIFFEREMT
+
     # rename this thread
     threading.currentThread().name = "MAIN"
+
     # Set paths
     if hasattr(sys, 'frozen'):
         lazylibrarian.FULL_PATH = os.path.abspath(sys.executable)
     else:
         lazylibrarian.FULL_PATH = os.path.abspath(__file__)
-
     lazylibrarian.PROG_DIR = os.path.dirname(lazylibrarian.FULL_PATH)
-    lazylibrarian.ARGS = sys.argv[1:]
 
+    lazylibrarian.ARGS = sys.argv[1:]
     lazylibrarian.SYS_ENCODING = None
 
     try:
@@ -33,26 +33,14 @@ def main():
     from optparse import OptionParser
 
     p = OptionParser()
-    p.add_option('-d', '--daemon', action = "store_true",
-                 dest = 'daemon', help = "Run the server as a daemon")
-    p.add_option('-q', '--quiet', action = "store_true",
-                 dest = 'quiet', help = "Don't log to console")
-    p.add_option('--debug', action="store_true",
-                 dest = 'debug', help = "Show debuglog messages")
-    p.add_option('--nolaunch', action = "store_true",
-                 dest = 'nolaunch', help="Don't start browser")
-    p.add_option('--port',
-                 dest = 'port', default = None,
-                 help = "Force webinterface to listen on this port")
-    p.add_option('--datadir',
-                 dest = 'datadir', default = None,
-                 help = "Path to the data directory")
-    p.add_option('--config',
-                 dest = 'config', default = None,
-                 help = "Path to config.ini file")
-    p.add_option('-p', '--pidfile',
-                 dest = 'pidfile', default = None,
-                 help = "Store the process id in the given file")
+    p.add_option('-d', '--daemon', action = "store_true", dest = 'daemon', help = "Run the server as a daemon")
+    p.add_option('-q', '--quiet', action = "store_true", dest = 'quiet', help = "Don't log to console")
+    p.add_option('--debug', action="store_true", dest = 'debug', help = "Show debuglog messages")
+    p.add_option('--nolaunch', action = "store_true", dest = 'nolaunch', help="Don't start browser")
+    p.add_option('--port', dest = 'port', default = None, help = "Force webinterface to listen on this port")
+    p.add_option('--datadir', dest = 'datadir', default = None, help = "Path to the data directory")
+    p.add_option('--config', dest = 'config', default = None, help = "Path to config.ini file")
+    p.add_option('-p', '--pidfile', dest = 'pidfile', default = None, help = "Store the process id in the given file")
 
     options, args = p.parse_args()
 
@@ -120,12 +108,12 @@ def main():
 
     # Try to start the server. 
     webStart.initialize({
-                    'http_port': HTTP_PORT,
-                    'http_host': lazylibrarian.HTTP_HOST,
-                    'http_root': lazylibrarian.HTTP_ROOT,
-                    'http_user': lazylibrarian.HTTP_USER,
-                    'http_pass': lazylibrarian.HTTP_PASS,
-            })
+        'http_port': HTTP_PORT,
+        'http_host': lazylibrarian.HTTP_HOST,
+        'http_root': lazylibrarian.HTTP_ROOT,
+        'http_user': lazylibrarian.HTTP_USER,
+        'http_pass': lazylibrarian.HTTP_PASS,
+        })
 
     if lazylibrarian.LAUNCH_BROWSER and not options.nolaunch:
         lazylibrarian.launch_browser(lazylibrarian.HTTP_HOST, HTTP_PORT, lazylibrarian.HTTP_ROOT)
@@ -134,7 +122,6 @@ def main():
 
     while True:
         if not lazylibrarian.SIGNAL:
-
             try:
                 time.sleep(1)
             except KeyboardInterrupt:
