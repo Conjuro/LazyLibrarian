@@ -9,7 +9,7 @@ from lib.apscheduler.scheduler import Scheduler
 
 import threading
 
-from lazylibrarian import logger, postprocess, searchnzb, SimpleCache
+from lazylibrarian import logger, SimpleCache
 
 FULL_PATH = None
 PROG_DIR = None
@@ -49,14 +49,15 @@ GIT_PATH = None
 GIT_USER = None
 GIT_PROJECT = None
 GIT_BRANCH = None
+
 INSTALL_TYPE = None
+
 CURRENT_VERSION = None
 LATEST_VERSION = None
 COMMITS_BEHIND = None
 
-CHECK_GITHUB = False
-CHECK_GITHUB_ON_STARTUP = False
-CHECK_GITHUB_INTERVAL = None
+CHECK_UPDATE = False
+CHECK_UPDATE_INTERVAL = None
 
 SAB_HOST = None
 SAB_PORT = None
@@ -94,9 +95,6 @@ NEWZBIN_UID = None
 NEWZBIN_PASSWORD = None
 
 EBOOK_TYPE = 'epub'
-
-LATEST_VERSION = None
-CURRENT_VERSION = None
 
 VERSIONCHECK_INTERVAL = 120 #Every 2 hours
 SEARCH_INTERVAL = 720 #Every 12 hours
@@ -139,29 +137,12 @@ def check_setting_int(config, cfg_name, item_name, def_val):
         except:
             config[cfg_name] = {}
             config[cfg_name][item_name] = my_val
-    logger.debug(item_name + " -> " + str(my_val))
     return my_val
-
-#################################################################################
-## Check_setting_float                                                          #
-#################################################################################
-##def check_setting_float(config, cfg_name, item_name, def_val):
-##    try:
-##        my_val = float(config[cfg_name][item_name])
-##    except:
-##        my_val = def_val
-##        try:
-##            config[cfg_name][item_name] = my_val
-##        except:
-##            config[cfg_name] = {}
-##            config[cfg_name][item_name] = my_val
-
-##    return my_val
 
 ################################################################################
 # Check_setting_str                                                            #
 ################################################################################
-def check_setting_str(config, cfg_name, item_name, def_val, log=True):
+def check_setting_str(config, cfg_name, item_name, def_val):
     try:
         my_val = config[cfg_name][item_name]
     except:
@@ -171,21 +152,15 @@ def check_setting_str(config, cfg_name, item_name, def_val, log=True):
         except:
             config[cfg_name] = {}
             config[cfg_name][item_name] = my_val
-
-    if log:
-        logger.debug(item_name + " -> " + my_val)
-    else:
-        logger.debug(item_name + " -> ******")
-
     return my_val
 
 def initialize():
 
     with INIT_LOCK:
 
-        global __INITIALIZED__, FULL_PATH, PROG_DIR, LOGLEVEL, DAEMON, DATADIR, CONFIGFILE, CFG, LOGDIR, HTTP_HOST, HTTP_PORT, HTTP_USER, HTTP_PASS, HTTP_ROOT, HTTP_LOOK, LAUNCH_BROWSER, LOGDIR, CACHEDIR, \
+        global __INITIALIZED__, FULL_PATH, PROG_DIR, LOGLEVEL, DAEMON, DATADIR, CONFIGFILE, CFG, LOGDIR, HTTP_HOST, HTTP_PORT, HTTP_USER, HTTP_PASS, HTTP_ROOT, HTTP_LOOK, LAUNCH_BROWSER, CACHEDIR, \
             IMP_ONLYISBN, IMP_PREFLANG, SAB_HOST, SAB_PORT, SAB_API, SAB_USER, SAB_PASS, DESTINATION_DIR, DESTINATION_COPY, DOWNLOAD_DIR, SAB_CAT, USENET_RETENTION, BLACKHOLE, BLACKHOLEDIR, GR_API, \
-            GIT_PATH, GIT_USER, GIT_PROJECT, GIT_BRANCH, CURRENT_VERSION, LATEST_VERSION, CHECK_GITHUB, CHECK_GITHUB_ON_STARTUP, CHECK_GITHUB_INTERVAL, \
+            GIT_PATH, GIT_USER, GIT_PROJECT, GIT_BRANCH, CURRENT_VERSION, LATEST_VERSION, CHECK_UPDATE, CHECK_UPDATE_INTERVAL, \
             NZBMATRIX, NZBMATRIX_USER, NZBMATRIX_API, NEWZNAB, NEWZNAB_HOST, NEWZNAB_API, NEWZBIN, NEWZBIN_UID, NEWZBIN_PASS, NEWZNAB2, NEWZNAB_HOST2, NEWZNAB_API2, EBOOK_TYPE
 
         if __INITIALIZED__:
@@ -208,13 +183,12 @@ def initialize():
         HTTP_ROOT = check_setting_str(CFG, 'General', 'http_root', '')
         HTTP_LOOK = check_setting_str(CFG, 'General', 'http_look', 'default')
         GIT_PATH = check_setting_str(CFG, 'General', 'git_path', '')
-        GIT_USER = check_setting_str(CFG, 'General', 'git_user', 'nutski')
+        GIT_USER = check_setting_str(CFG, 'General', 'git_user', 'herman-rogers')
         GIT_PROJECT = check_setting_str(CFG, 'General', 'git_project', 'LazyLibrarian-1')
-        GIT_BRANCH = check_setting_str(CFG, 'General', 'git_branch', 'dev')
+        GIT_BRANCH = check_setting_str(CFG, 'General', 'git_branch', 'master')
         
-        CHECK_GITHUB = bool(check_setting_int(CFG, 'General', 'check_github', 1))
-        CHECK_GITHUB_ON_STARTUP = bool(check_setting_int(CFG, 'General', 'check_github_on_startup', 1))
-        CHECK_GITHUB_INTERVAL = check_setting_int(CFG, 'General', 'check_github_interval', 360)
+        CHECK_UPDATE = bool(check_setting_int(CFG, 'General', 'check_update', 1))
+        CHECK_UPDATE_INTERVAL = check_setting_int(CFG, 'General', 'check_update_interval', 360)
 
         LAUNCH_BROWSER = bool(check_setting_int(CFG, 'General', 'launch_browser', 1))
         LOGDIR = check_setting_str(CFG, 'General', 'logdir', '')
@@ -259,14 +233,6 @@ def initialize():
         if not LOGDIR:
             LOGDIR = os.path.join(DATADIR, 'Logs')
 
-        # Put the cache dir in the data dir for now
-        CACHEDIR = os.path.join(DATADIR, 'cache')
-        if not os.path.exists(CACHEDIR):
-            try:
-                os.makedirs(CACHEDIR)
-            except OSError:
-                logger.error('Could not create cachedir. Check permissions of: ' + DATADIR)
-
         # Create logdir
         if not os.path.exists(LOGDIR):
             try:
@@ -279,40 +245,45 @@ def initialize():
         # Start the logger, silence console logging if we need to
         logger.lazylibrarian_log.initLogger(loglevel=LOGLEVEL)
 
+        # Announce ourself
+        logger.info(u'Starting LazyLibrarian.')
+
+        # Put the cache dir in the data dir for now
+        CACHEDIR = os.path.join(DATADIR, 'cache')
+        if not os.path.exists(CACHEDIR):
+            try:
+                logger.debug(u'Creating cachedir: %s' % CACHEDIR)
+                os.makedirs(CACHEDIR)
+            except OSError:
+                logger.error(u'Could not create cachedir. Check permissions of: %s' % DATADIR)
+
         # Clearing cache
         if os.path.exists(".ProviderCache"):
             for f in os.listdir(".ProviderCache"):
+                logger.debug(u'Clearing cache.')
                 os.unlink("%s/%s" % (".ProviderCache", f))
         # Clearing throttling timeouts
+        logger.debug(u'Clearing throttling timeouts')
         t = SimpleCache.ThrottlingProcessor()
         t.lastRequestTime.clear()
 
         # Initialize the database
         try:
+            logger.info(u'Checking the database.')
             dbcheck()
         except Exception, e:
-            logger.error("Can't connect to the database: %s" % e)
+            logger.error(u"Can't connect to the database: %s" % e)
 
-        __INITIALIZED__ = True
-        return True
-        
-        
         # Get the currently installed version - returns None, 'win32' or the git hash
         # Also sets INSTALL_TYPE variable to 'win', 'git' or 'source'
+        logger.info(u'Getting current version.')
+        from lazylibrarian import versioncheck
         CURRENT_VERSION = versioncheck.getVersion()
+        logger.debug(u'Current version is: %s' % CURRENT_VERSION)
 
-        # Check for new versions
-        if CHECK_GITHUB_ON_STARTUP:
-            try:
-                LATEST_VERSION = versioncheck.checkGithub()
-            except:
-                LATEST_VERSION = CURRENT_VERSION
-        else:
-            LATEST_VERSION = CURRENT_VERSION
-
+        logger.debug(u'Initialize completed.')
         __INITIALIZED__ = True
         return True
-
 
 def daemonize():
     """
@@ -321,21 +292,24 @@ def daemonize():
 
     # Make a non-session-leader child process
     try:
+        logger.debug(u'Forking session.')
         pid = os.fork() #@UndefinedVariable - only available in UNIX
         if pid != 0:
             sys.exit(0)
     except OSError, e:
-        raise RuntimeError("1st fork failed: %s [%d]" %
-                   (e.strerror, e.errno))
+        raise RuntimeError("1st fork failed: %s [%d]" % (e.strerror, e.errno))
 
+    logger.debug(u'Creating a session and setting the process group ID.')
     os.setsid() #@UndefinedVariable - only available in UNIX
 
     # Make sure I can read my own files and shut out others
+    logger.debug('Setting umask.')
     prev = os.umask(0)
     os.umask(prev and int('077', 8))
 
     # Make the child a session-leader by detaching from the terminal
     try:
+        logger.debug(u'Detaching from terminal.')
         pid = os.fork() #@UndefinedVariable - only available in UNIX
         if pid != 0:
             sys.exit(0)
@@ -343,6 +317,7 @@ def daemonize():
         raise RuntimeError("2st fork failed: %s [%d]" %
                    (e.strerror, e.errno))
 
+    logger.debug(u'Redirecting stdin to /dev/null.')
     dev_null = file('/dev/null', 'r')
     os.dup2(dev_null.fileno(), sys.stdin.fileno())
 
@@ -356,14 +331,17 @@ def launch_browser(host, port, root):
         host = 'localhost'
 
     try:
+        logger.debug(u'Opening webbrowser: http://%s:%i%s' % (host, port, root))
         webbrowser.open('http://%s:%i%s' % (host, port, root))
     except Exception, e:
-        logger.error('Could not launch browser: %s' % e)
+        logger.error(u'Could not launch browser: %s' % e)
 
 def config_write():
+    logger.debug(u'Opening config file: %s' % CONFIGFILE)
     new_config = ConfigObj()
     new_config.filename = CONFIGFILE
 
+    logger.debug(u'Writing settings.')
     new_config['General'] = {}
     new_config['General']['http_port'] = HTTP_PORT
     new_config['General']['http_host'] = HTTP_HOST
@@ -378,9 +356,8 @@ def config_write():
     new_config['General']['git_project'] = GIT_PROJECT
     new_config['General']['git_branch'] = GIT_BRANCH
     
-    new_config['General']['check_github'] = int(CHECK_GITHUB)
-    new_config['General']['check_github_on_startup'] = int(CHECK_GITHUB_ON_STARTUP)
-    new_config['General']['check_github_interval'] = CHECK_GITHUB_INTERVAL
+    new_config['General']['check_update'] = int(CHECK_UPDATE)
+    new_config['General']['check_update_interval'] = CHECK_UPDATE_INTERVAL
     
     new_config['General']['imp_onlyisbn'] = int(IMP_ONLYISBN)
     new_config['General']['imp_preflang'] = IMP_PREFLANG
@@ -422,48 +399,55 @@ def config_write():
     new_config['Newzbin']['newzbin_uid'] = NEWZBIN_UID
     new_config['Newzbin']['newzbin_pass'] = NEWZBIN_PASS
 
+    logger.debug(u'Closing file.')
     new_config.write()
 
 def dbcheck():
-
+    # TODO: Rewrite this whole section to use database.py like further below.
+    logger.debug(u'Opening database file: %s' % DBFILE)
     conn=sqlite3.connect(DBFILE)
     c=conn.cursor()
+    logger.debug(u'Making sure all tables exists.')
     c.execute('CREATE TABLE IF NOT EXISTS authors (AuthorID TEXT, AuthorName TEXT UNIQUE, AuthorImg TEXT, AuthorLink TEXT, DateAdded TEXT, Status TEXT, LastBook TEXT, LastLink Text, LastDate TEXT, HaveBooks INTEGER, TotalBooks INTEGER, AuthorBorn TEXT, AuthorDeath TEXT)')
     c.execute('CREATE TABLE IF NOT EXISTS books (AuthorID TEXT, AuthorName TEXT, AuthorLink TEXT, BookName TEXT, BookSub TEXT, BookDesc TEXT, BookGenre TEXT, BookIsbn TEXT, BookPub TEXT, BookRate INTEGER, BookImg TEXT, BookPages INTEGER, BookLink TEXT, BookID TEXT UNIQUE, BookDate TEXT, BookLang TEXT, BookAdded TEXT, Status TEXT)')
     c.execute('CREATE TABLE IF NOT EXISTS wanted (BookID TEXT, NZBurl TEXT, NZBtitle TEXT, NZBdate TEXT, NZBprov TEXT, Status TEXT)')
 
+    # Not sure how much point there is in testing just 3 columns from the same table
+    # TODO: Rewrite this section to test all columns in all tables.
     try:
-        logger.info('Checking database')
+        logger.debug(u'Testing a few columns.')
         c.execute('SELECT BookSub from books')
     except sqlite3.OperationalError:
-        logger.info('Updating database to hold book subtitles.')
+        logger.debug(u'Updating database to hold book subtitles.')
         c.execute('ALTER TABLE books ADD COLUMN BookSub TEXT')
 
     try:
         c.execute('SELECT BookPub from books')
     except sqlite3.OperationalError:
-        logger.info('Updating database to hold book publisher')
+        logger.debug(u'Updating database to hold book publisher')
         c.execute('ALTER TABLE books ADD COLUMN BookPub TEXT')
 
     try:
         c.execute('SELECT BookGenre from books')
     except sqlite3.OperationalError:
-        logger.info('Updating database to hold bookgenre')
+        logger.debug(u'Updating database to hold bookgenre')
         c.execute('ALTER TABLE books ADD COLUMN BookGenre TEXT')
 
+    logger.debug(u'Closing database.')
     conn.commit()
     c.close()
 
     try:
+        logger.debug(u'Cleaning database.')
         myDB = database.DBConnection()
         author = myDB.select('SELECT AuthorID FROM authors WHERE AuthorName IS NULL')
         if author:
-            logger.info('Removing un-named author from database')
+            logger.info(u'Removing un-named author from database')
             authorid = author[0]["AuthorID"];
             myDB.action('DELETE from authors WHERE AuthorID=?', [authorid])
             myDB.action('DELETE from books WHERE AuthorID=?', [authorid])
     except Exception, z:
-        logger.info('Error: ' + str(z))
+        logger.error(u'Error: %s' % str(z))
 
 def start():
     global __INITIALIZED__, started
@@ -474,47 +458,54 @@ def start():
         from lazylibrarian import searchnzb, versioncheck, postprocess
 
         # Crons and scheduled jobs go here
+        logger.debug(u'Scheduling interval jobs.')
         starttime = datetime.datetime.now()
         SCHED.add_interval_job(postprocess.processDir, minutes=SCAN_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
         SCHED.add_interval_job(searchnzb.searchbook, minutes=SEARCH_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
-#        SCHED.add_interval_job(versioncheck.checkGithub, minutes=360)
-        if CHECK_GITHUB_ON_STARTUP:
-            versioncheck.checkGithub
-        
-        if CHECK_GITHUB:
-            SCHED.add_interval_job(versioncheck.checkGithub, minutes=CHECK_GITHUB_INTERVAL)
+        if CHECK_UPDATE:
+            SCHED.add_interval_job(versioncheck.checkUpdate, minutes=CHECK_UPDATE_INTERVAL, start_date=datetime.datetime.now())
             
+        logger.debug(u'Starting scheduler.')
         SCHED.start()
-#        for job in SCHED.get_jobs():
-#            print job
+        for job in SCHED.get_jobs():
+            logger.debug(u'Scheduled job: %s' % job)
         started = True
 
 def shutdown(restart=False, update=False):
 
+    logger.debug(u'Stopping webserver.')
     cherrypy.engine.exit()
+    logger.debug(u'Stopping scheduler.')
     SCHED.shutdown(wait=False)
+    logger.debug(u'Writing config.')
     config_write()
 
     if not restart and not update:
-        logger.info('LazyLibrarian is shutting down...')
-    if update:
-        logger.info('LazyLibrarian is updating...')
+        logger.info(u'LazyLibrarian is shutting down...')
+    elif update:
+        logger.info(u'LazyLibrarian is updating...')
         try:
+            from lazylibrarian import versioncheck
             versioncheck.update()
         except Exception, e:
-            logger.warn('LazyLibrarian failed to update: %s. Restarting.' % e) 
+            logger.warn(u'LazyLibrarian failed to update: %s. Restarting.' % e) 
 
     if PIDFILE :
-        logger.info('Removing pidfile %s' % PIDFILE)
+        logger.debug(u'Removing pidfile %s' % PIDFILE)
         os.remove(PIDFILE)
 
     if restart:
-        logger.info('LazyLibrarian is restarting ...')
+        logger.info(u'LazyLibrarian is restarting ...')
         popen_list = [sys.executable, FULL_PATH]
         popen_list += ARGS
         if '--nolaunch' not in popen_list:
             popen_list += ['--nolaunch']
-            logger.info('Restarting LazyLibrarian with ' + str(popen_list))
+            logger.info(u'Restarting LazyLibrarian with ' + str(popen_list))
         subprocess.Popen(popen_list, cwd=os.getcwd())
 
-    os._exit(0)
+    logger.shutdown()
+
+    if DAEMON and not sys.platform == 'win32':
+        os._exit(0)
+    else:
+        sys.exit(0)

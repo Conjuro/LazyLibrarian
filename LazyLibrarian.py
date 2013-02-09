@@ -5,18 +5,18 @@ import lazylibrarian
 from lazylibrarian import webStart, logger
 
 def main():
-	#DIFFEREMT
+
     # rename this thread
     threading.currentThread().name = "MAIN"
+
     # Set paths
     if hasattr(sys, 'frozen'):
         lazylibrarian.FULL_PATH = os.path.abspath(sys.executable)
     else:
         lazylibrarian.FULL_PATH = os.path.abspath(__file__)
-
     lazylibrarian.PROG_DIR = os.path.dirname(lazylibrarian.FULL_PATH)
-    lazylibrarian.ARGS = sys.argv[1:]
 
+    lazylibrarian.ARGS = sys.argv[1:]
     lazylibrarian.SYS_ENCODING = None
 
     try:
@@ -33,26 +33,14 @@ def main():
     from optparse import OptionParser
 
     p = OptionParser()
-    p.add_option('-d', '--daemon', action = "store_true",
-                 dest = 'daemon', help = "Run the server as a daemon")
-    p.add_option('-q', '--quiet', action = "store_true",
-                 dest = 'quiet', help = "Don't log to console")
-    p.add_option('--debug', action="store_true",
-                 dest = 'debug', help = "Show debuglog messages")
-    p.add_option('--nolaunch', action = "store_true",
-                 dest = 'nolaunch', help="Don't start browser")
-    p.add_option('--port',
-                 dest = 'port', default = None,
-                 help = "Force webinterface to listen on this port")
-    p.add_option('--datadir',
-                 dest = 'datadir', default = None,
-                 help = "Path to the data directory")
-    p.add_option('--config',
-                 dest = 'config', default = None,
-                 help = "Path to config.ini file")
-    p.add_option('-p', '--pidfile',
-                 dest = 'pidfile', default = None,
-                 help = "Store the process id in the given file")
+    p.add_option('-d', '--daemon', action = "store_true", dest = 'daemon', help = "Run the server as a daemon")
+    p.add_option('-q', '--quiet', action = "store_true", dest = 'quiet', help = "Don't log to console")
+    p.add_option('--debug', action="store_true", dest = 'debug', help = "Show debuglog messages")
+    p.add_option('--nolaunch', action = "store_true", dest = 'nolaunch', help="Don't start browser")
+    p.add_option('--port', dest = 'port', default = None, help = "Force webinterface to listen on this port")
+    p.add_option('--datadir', dest = 'datadir', default = None, help = "Path to the data directory")
+    p.add_option('--config', dest = 'config', default = None, help = "Path to config.ini file")
+    p.add_option('-p', '--pidfile', dest = 'pidfile', default = None, help = "Store the process id in the given file")
 
     options, args = p.parse_args()
 
@@ -97,54 +85,60 @@ def main():
     if not os.access(lazylibrarian.DATADIR, os.W_OK):
         raise SystemExit('Cannot write to the data directory: ' + lazylibrarian.DATADIR + '. Exit ...')
 
-    # create database and config
+    # Set database and config location variables.
     lazylibrarian.DBFILE = os.path.join(lazylibrarian.DATADIR, 'lazylibrarian.db')
     lazylibrarian.CFG = ConfigObj(lazylibrarian.CONFIGFILE, encoding='utf-8')
 
+    # Load settings and database.
     lazylibrarian.initialize()
 
-    #check the version when the application starts
-    from lazylibrarian import versioncheck
-    lazylibrarian.CURRENT_VERSION = versioncheck.getVersion()
-    lazylibrarian.LATEST_VERSION = versioncheck.checkGithub()
+    # Fork app to background and release terminal.
+    if lazylibrarian.DAEMON:
+        logger.info(u'Attempting to switch to daemon mode.')
+        lazylibrarian.daemonize()
 
     if options.port:
         HTTP_PORT = int(options.port)
-        logger.info('Starting LazyLibrarian on forced port: %s' % HTTP_PORT)
+        logger.info(u'Starting webserver on forced port: %s' % HTTP_PORT)
     else:
         HTTP_PORT = int(lazylibrarian.HTTP_PORT)
-        logger.info('Starting LazyLibrarian on port: %s' % lazylibrarian.HTTP_PORT)
-
-    if lazylibrarian.DAEMON:
-        lazylibrarian.daemonize()
+        logger.info(u'Starting webserver on port: %s' % lazylibrarian.HTTP_PORT)
 
     # Try to start the server. 
     webStart.initialize({
-                    'http_port': HTTP_PORT,
-                    'http_host': lazylibrarian.HTTP_HOST,
-                    'http_root': lazylibrarian.HTTP_ROOT,
-                    'http_user': lazylibrarian.HTTP_USER,
-                    'http_pass': lazylibrarian.HTTP_PASS,
-            })
+        'http_port': HTTP_PORT,
+        'http_host': lazylibrarian.HTTP_HOST,
+        'http_root': lazylibrarian.HTTP_ROOT,
+        'http_user': lazylibrarian.HTTP_USER,
+        'http_pass': lazylibrarian.HTTP_PASS,
+        })
 
-    if lazylibrarian.LAUNCH_BROWSER and not options.nolaunch:
-        lazylibrarian.launch_browser(lazylibrarian.HTTP_HOST, HTTP_PORT, lazylibrarian.HTTP_ROOT)
-
+    logger.debug(u'Starting subprocesses.')
     lazylibrarian.start()
 
+    if lazylibrarian.LAUNCH_BROWSER and not options.nolaunch:
+        logger.info(u'Launching browser.')
+        lazylibrarian.launch_browser(lazylibrarian.HTTP_HOST, HTTP_PORT, lazylibrarian.HTTP_ROOT)
+
+    logger.info(u'Startup process completed.')
+
+    logger.debug(u'Startup process going to sleep until signal received.')
     while True:
         if not lazylibrarian.SIGNAL:
-
             try:
                 time.sleep(1)
             except KeyboardInterrupt:
+                logger.debug(u'Received keyboardinterrupt.')
                 lazylibrarian.shutdown()
         else:
             if lazylibrarian.SIGNAL == 'shutdown':
+                logger.debug(u'Received shutdown signal.')
                 lazylibrarian.shutdown()
             elif lazylibrarian.SIGNAL == 'restart':
+                logger.debug(u'Received restart signal.')
                 lazylibrarian.shutdown(restart=True)
             else:
+                logger.debug(u'Received update signal.')
                 lazylibrarian.shutdown(restart=True, update=True)
             lazylibrarian.SIGNAL = None
     return
