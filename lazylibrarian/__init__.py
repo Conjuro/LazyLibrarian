@@ -49,14 +49,15 @@ GIT_PATH = None
 GIT_USER = None
 GIT_PROJECT = None
 GIT_BRANCH = None
+
 INSTALL_TYPE = None
+
 CURRENT_VERSION = None
 LATEST_VERSION = None
 COMMITS_BEHIND = None
 
-CHECK_GITHUB = False
-CHECK_GITHUB_ON_STARTUP = False
-CHECK_GITHUB_INTERVAL = None
+CHECK_UPDATE = False
+CHECK_UPDATE_INTERVAL = None
 
 SAB_HOST = None
 SAB_PORT = None
@@ -94,9 +95,6 @@ NEWZBIN_UID = None
 NEWZBIN_PASSWORD = None
 
 EBOOK_TYPE = 'epub'
-
-LATEST_VERSION = None
-CURRENT_VERSION = None
 
 VERSIONCHECK_INTERVAL = 120 #Every 2 hours
 SEARCH_INTERVAL = 720 #Every 12 hours
@@ -185,7 +183,7 @@ def initialize():
 
         global __INITIALIZED__, FULL_PATH, PROG_DIR, LOGLEVEL, DAEMON, DATADIR, CONFIGFILE, CFG, LOGDIR, HTTP_HOST, HTTP_PORT, HTTP_USER, HTTP_PASS, HTTP_ROOT, HTTP_LOOK, LAUNCH_BROWSER, LOGDIR, CACHEDIR, \
             IMP_ONLYISBN, IMP_PREFLANG, SAB_HOST, SAB_PORT, SAB_API, SAB_USER, SAB_PASS, DESTINATION_DIR, DESTINATION_COPY, DOWNLOAD_DIR, SAB_CAT, USENET_RETENTION, BLACKHOLE, BLACKHOLEDIR, GR_API, \
-            GIT_PATH, GIT_USER, GIT_PROJECT, GIT_BRANCH, CURRENT_VERSION, LATEST_VERSION, CHECK_GITHUB, CHECK_GITHUB_ON_STARTUP, CHECK_GITHUB_INTERVAL, \
+            GIT_PATH, GIT_USER, GIT_PROJECT, GIT_BRANCH, CURRENT_VERSION, LATEST_VERSION, CHECK_UPDATE, CHECK_UPDATE_INTERVAL, \
             NZBMATRIX, NZBMATRIX_USER, NZBMATRIX_API, NEWZNAB, NEWZNAB_HOST, NEWZNAB_API, NEWZBIN, NEWZBIN_UID, NEWZBIN_PASS, NEWZNAB2, NEWZNAB_HOST2, NEWZNAB_API2, EBOOK_TYPE
 
         if __INITIALIZED__:
@@ -208,13 +206,12 @@ def initialize():
         HTTP_ROOT = check_setting_str(CFG, 'General', 'http_root', '')
         HTTP_LOOK = check_setting_str(CFG, 'General', 'http_look', 'default')
         GIT_PATH = check_setting_str(CFG, 'General', 'git_path', '')
-        GIT_USER = check_setting_str(CFG, 'General', 'git_user', 'nutski')
+        GIT_USER = check_setting_str(CFG, 'General', 'git_user', 'herman-rogers')
         GIT_PROJECT = check_setting_str(CFG, 'General', 'git_project', 'LazyLibrarian-1')
-        GIT_BRANCH = check_setting_str(CFG, 'General', 'git_branch', 'dev')
+        GIT_BRANCH = check_setting_str(CFG, 'General', 'git_branch', 'master')
         
-        CHECK_GITHUB = bool(check_setting_int(CFG, 'General', 'check_github', 1))
-        CHECK_GITHUB_ON_STARTUP = bool(check_setting_int(CFG, 'General', 'check_github_on_startup', 1))
-        CHECK_GITHUB_INTERVAL = check_setting_int(CFG, 'General', 'check_github_interval', 360)
+        CHECK_UPDATE = bool(check_setting_int(CFG, 'General', 'check_update', 1))
+        CHECK_UPDATE_INTERVAL = check_setting_int(CFG, 'General', 'check_update_interval', 360)
 
         LAUNCH_BROWSER = bool(check_setting_int(CFG, 'General', 'launch_browser', 1))
         LOGDIR = check_setting_str(CFG, 'General', 'logdir', '')
@@ -293,26 +290,12 @@ def initialize():
         except Exception, e:
             logger.error("Can't connect to the database: %s" % e)
 
-        __INITIALIZED__ = True
-        return True
-        
-        
         # Get the currently installed version - returns None, 'win32' or the git hash
         # Also sets INSTALL_TYPE variable to 'win', 'git' or 'source'
         CURRENT_VERSION = versioncheck.getVersion()
 
-        # Check for new versions
-        if CHECK_GITHUB_ON_STARTUP:
-            try:
-                LATEST_VERSION = versioncheck.checkGithub()
-            except:
-                LATEST_VERSION = CURRENT_VERSION
-        else:
-            LATEST_VERSION = CURRENT_VERSION
-
         __INITIALIZED__ = True
         return True
-
 
 def daemonize():
     """
@@ -378,9 +361,8 @@ def config_write():
     new_config['General']['git_project'] = GIT_PROJECT
     new_config['General']['git_branch'] = GIT_BRANCH
     
-    new_config['General']['check_github'] = int(CHECK_GITHUB)
-    new_config['General']['check_github_on_startup'] = int(CHECK_GITHUB_ON_STARTUP)
-    new_config['General']['check_github_interval'] = CHECK_GITHUB_INTERVAL
+    new_config['General']['check_update'] = int(CHECK_UPDATE)
+    new_config['General']['check_update_interval'] = CHECK_UPDATE_INTERVAL
     
     new_config['General']['imp_onlyisbn'] = int(IMP_ONLYISBN)
     new_config['General']['imp_preflang'] = IMP_PREFLANG
@@ -477,16 +459,12 @@ def start():
         starttime = datetime.datetime.now()
         SCHED.add_interval_job(postprocess.processDir, minutes=SCAN_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
         SCHED.add_interval_job(searchnzb.searchbook, minutes=SEARCH_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
-#        SCHED.add_interval_job(versioncheck.checkGithub, minutes=360)
-        if CHECK_GITHUB_ON_STARTUP:
-            versioncheck.checkGithub
-        
-        if CHECK_GITHUB:
-            SCHED.add_interval_job(versioncheck.checkGithub, minutes=CHECK_GITHUB_INTERVAL)
+        if CHECK_UPDATE:
+            SCHED.add_interval_job(versioncheck.checkUpdate, minutes=CHECK_UPDATE_INTERVAL, start_date=datetime.datetime.now())
             
         SCHED.start()
-#        for job in SCHED.get_jobs():
-#            print job
+        for job in SCHED.get_jobs():
+            logger.debug(u'Scheduled job: %s' % job)
         started = True
 
 def shutdown(restart=False, update=False):
