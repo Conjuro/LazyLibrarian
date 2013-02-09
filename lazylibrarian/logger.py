@@ -89,6 +89,3 @@ def warn(message):
 
 def error(message):
     lazylibrarian_log.log(message, level='ERROR')
-
-def shutdown():
-    logging.shutdown()
