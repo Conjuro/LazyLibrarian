@@ -85,22 +85,24 @@ def main():
     if not os.access(lazylibrarian.DATADIR, os.W_OK):
         raise SystemExit('Cannot write to the data directory: ' + lazylibrarian.DATADIR + '. Exit ...')
 
-    # Set database and config location variables
+    # Set database and config location variables.
     lazylibrarian.DBFILE = os.path.join(lazylibrarian.DATADIR, 'lazylibrarian.db')
     lazylibrarian.CFG = ConfigObj(lazylibrarian.CONFIGFILE, encoding='utf-8')
 
-    # Load settings and database
+    # Load settings and database.
     lazylibrarian.initialize()
+
+    # Fork app to background and release terminal.
+    if lazylibrarian.DAEMON:
+        logger.info(u'Attempting to switch to daemon mode.')
+        lazylibrarian.daemonize()
 
     if options.port:
         HTTP_PORT = int(options.port)
-        logger.info('Starting LazyLibrarian on forced port: %s' % HTTP_PORT)
+        logger.info(u'Starting webserver on forced port: %s' % HTTP_PORT)
     else:
         HTTP_PORT = int(lazylibrarian.HTTP_PORT)
-        logger.info('Starting LazyLibrarian on port: %s' % lazylibrarian.HTTP_PORT)
-
-    if lazylibrarian.DAEMON:
-        lazylibrarian.daemonize()
+        logger.info(u'Starting webserver on port: %s' % lazylibrarian.HTTP_PORT)
 
     # Try to start the server. 
     webStart.initialize({
@@ -111,26 +113,32 @@ def main():
         'http_pass': lazylibrarian.HTTP_PASS,
         })
 
+    logger.debug(u'Starting subprocesses.')
     lazylibrarian.start()
 
     if lazylibrarian.LAUNCH_BROWSER and not options.nolaunch:
-        logger.info(u'Launching browser: %s:%s%s)' % (lazylibrarian.HTTP_HOST, HTTP_PORT, lazylibrarian.HTTP_ROOT))
+        logger.info(u'Launching browser.')
         lazylibrarian.launch_browser(lazylibrarian.HTTP_HOST, HTTP_PORT, lazylibrarian.HTTP_ROOT)
 
     logger.info(u'Startup process completed.')
 
+    logger.debug(u'Startup process going to sleep until signal received.')
     while True:
         if not lazylibrarian.SIGNAL:
             try:
                 time.sleep(1)
             except KeyboardInterrupt:
+                logger.debug(u'Received keyboardinterrupt.')
                 lazylibrarian.shutdown()
         else:
             if lazylibrarian.SIGNAL == 'shutdown':
+                logger.debug(u'Received shutdown signal.')
                 lazylibrarian.shutdown()
             elif lazylibrarian.SIGNAL == 'restart':
+                logger.debug(u'Received restart signal.')
                 lazylibrarian.shutdown(restart=True)
             else:
+                logger.debug(u'Received update signal.')
                 lazylibrarian.shutdown(restart=True, update=True)
             lazylibrarian.SIGNAL = None
     return
