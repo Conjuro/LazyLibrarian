@@ -7,10 +7,10 @@ import lazylibrarian
 from lazylibrarian import database, logger, formatter
 
 def processDir():
-    logger.debug('Postprocessing has begun.')
-	
     # rename this thread
     threading.currentThread().name = "POSTPROCESS"
+
+    logger.debug('Postprocessing has begun.')
 
     processpath = lazylibrarian.DOWNLOAD_DIR
     downloads = os.listdir(processpath)

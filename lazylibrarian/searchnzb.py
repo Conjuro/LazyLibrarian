@@ -14,6 +14,9 @@ def searchbook(books=None):
 
     # rename this thread
     threading.currentThread().name = "SEARCHBOOKS"
+
+    logger.debug('Book search has begun.')
+
     myDB = database.DBConnection()
     searchlist = []
     searchlist1 = []
