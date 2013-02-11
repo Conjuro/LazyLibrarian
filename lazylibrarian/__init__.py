@@ -27,7 +27,6 @@ SCHED = Scheduler()
 
 INIT_LOCK = threading.Lock()
 __INITIALIZED__ = False
-started = False
 
 DATADIR = None
 DBFILE=None
@@ -155,9 +154,7 @@ def check_setting_str(config, cfg_name, item_name, def_val):
     return my_val
 
 def initialize():
-
     with INIT_LOCK:
-
         global __INITIALIZED__, FULL_PATH, PROG_DIR, LOGLEVEL, DAEMON, DATADIR, CONFIGFILE, CFG, LOGDIR, HTTP_HOST, HTTP_PORT, HTTP_USER, HTTP_PASS, HTTP_ROOT, HTTP_LOOK, LAUNCH_BROWSER, CACHEDIR, \
             IMP_ONLYISBN, IMP_PREFLANG, SAB_HOST, SAB_PORT, SAB_API, SAB_USER, SAB_PASS, DESTINATION_DIR, DESTINATION_COPY, DOWNLOAD_DIR, SAB_CAT, USENET_RETENTION, BLACKHOLE, BLACKHOLEDIR, GR_API, \
             GIT_PATH, GIT_USER, GIT_PROJECT, GIT_BRANCH, CURRENT_VERSION, LATEST_VERSION, CHECK_UPDATE, CHECK_UPDATE_INTERVAL, \
@@ -450,29 +447,23 @@ def dbcheck():
         logger.error(u'Error: %s' % str(z))
 
 def start():
-    global __INITIALIZED__, started
-
+    global __INITIALIZED__
     if __INITIALIZED__:
-        
         # Start our scheduled background tasks
-        from lazylibrarian import searchnzb, versioncheck, postprocess
+        logger.debug(u'Starting scheduler.')
+        SCHED.start()
 
         # Crons and scheduled jobs go here
         logger.debug(u'Scheduling interval jobs.')
-        starttime = datetime.datetime.now()
-        SCHED.add_interval_job(postprocess.processDir, minutes=SCAN_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
-        SCHED.add_interval_job(searchnzb.searchbook, minutes=SEARCH_INTERVAL, start_date=starttime+datetime.timedelta(minutes=1))
+        from lazylibrarian import searchnzb, versioncheck, postprocess
+        SCHED.add_interval_job(postprocess.processDir, minutes=SCAN_INTERVAL, start_date=datetime.datetime.now())
+        SCHED.add_interval_job(searchnzb.searchbook, minutes=SEARCH_INTERVAL, start_date=datetime.datetime.now())
         if CHECK_UPDATE:
             SCHED.add_interval_job(versioncheck.checkUpdate, minutes=CHECK_UPDATE_INTERVAL, start_date=datetime.datetime.now())
-            
-        logger.debug(u'Starting scheduler.')
-        SCHED.start()
         for job in SCHED.get_jobs():
             logger.debug(u'Scheduled job: %s' % job)
-        started = True
 
 def shutdown(restart=False, update=False):
-
     logger.debug(u'Stopping webserver.')
     cherrypy.engine.exit()
     logger.debug(u'Stopping scheduler.')
