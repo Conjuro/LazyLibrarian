@@ -107,10 +107,11 @@ def checkGithub():
     # See how many commits behind we are
     if lazylibrarian.CURRENT_VERSION:
         logger.info(u'Comparing currently installed version with latest github version')
-        logger.debug(u'Git  User: %s' % str(lazylibrarian.GIT_USER))
+        logger.debug(u'Git User: %s' % str(lazylibrarian.GIT_USER))
+        logger.debug(u'Git Branch: %s' % str(lazylibrarian.GIT_BRANCH))
         logger.debug(u'Current Version: %s' % str(lazylibrarian.CURRENT_VERSION))
         logger.debug(u'Latest Version: %s' % str(lazylibrarian.LATEST_VERSION))
-        url = 'https://api.github.com/repos/%s/%s/compare/%s...%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_PROJECT, lazylibrarian.LATEST_VERSION, lazylibrarian.CURRENT_VERSION)
+        url = 'https://api.github.com/repos/%s/%s/compare/%s...%s' % (lazylibrarian.GIT_USER, lazylibrarian.GIT_PROJECT, lazylibrarian.GIT_BRANCH, lazylibrarian.CURRENT_VERSION)
         logger.debug(u'Using url: %s' % url)
 
         try:
@@ -136,14 +137,13 @@ def checkGithub():
 
     else:
         logger.warn(u'You are running an unknown version of LazyLibrarian. Run the updater to identify your version')
-
     return lazylibrarian.LATEST_VERSION
 
 def checkUpdate():
-
     logger.info(u'Checking for updates.')
-    # Set/get version of local and remote branch
-    lazylibrarian.CURRENT_VERSION = getVersion()
+    # Get local version if necessary and check remote branch
+    if not lazylibrarian.CURRENT_VERSION:
+        lazylibrarian.CURRENT_VERSION = getVersion()
     lazylibrarian.LATEST_VERSION = checkGithub()
     return
 
